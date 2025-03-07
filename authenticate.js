@@ -141,3 +141,11 @@ exports.isStudent = (req, res, next) => {
   }
   next();
 };
+
+// Register user
+router.post('/register', register);
+
+// Login user
+router.post('/login', login);
+
+module.exports = router;
