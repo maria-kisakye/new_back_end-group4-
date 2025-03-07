@@ -28,3 +28,19 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
+app.post('/addUser',(req,res)=>{
+    const {name, email,password,role} = req.body;
+    const sql = 'INSERT INTO users SET (?,?)';
+    db.query(sql,[name,email,password,role],(error,result)=>{
+        if(error) throw error;
+        res.send('User added to database');
+})});
+
+app.get('/getUsers',(req,res)=>{
+    const sql = 'SELECT * FROM Users';
+    db.query(sql,(error,result)=>{
+        if(error) throw error;
+        res.send(result);
+    })
+});
