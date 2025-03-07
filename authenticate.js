@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const db = require('../db');
 require('dotenv').config();
 
+const auth = require('./authenticate');
 const router = express.Router();
 
 // User registration with role selection (student, president, admin)

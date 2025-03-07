@@ -1,7 +1,8 @@
 const express = require('express');
 const db = require('./config');
-
+const auth = require('./authenticate');
 const app = express();
+const router = express.Router();
 
 app.use(express.json());
 
