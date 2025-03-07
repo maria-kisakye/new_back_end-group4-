@@ -23,3 +23,82 @@ router.post('/register', (req, res) => {
         res.json({ message: "User registered successfully" });
     });
 });
+
+// Register user
+exports.register = async (req, res) => {
+  const { name, email, password, role } = req.body;
+
+  try {
+    let user = await db.User.findOne({ where: { email } });
+
+    if (user) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    user = await db.User.create({
+      name,
+      email,
+      password,
+      role
+    });
+
+    const payload = {
+      user: {
+        id: user.id,
+        role: user.role
+      }
+    };
+
+    jwt.sign(
+      payload,
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' },
+      (err, token) => {
+        if (err) throw err;
+        res.status(200).json({ token });
+      }
+    );
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+};
+
+// Login user
+exports.login = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await db.User.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    const payload = {
+      user: {
+        id: user.id,
+        role: user.role
+      }
+    };
+
+    jwt.sign(
+      payload,
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' },
+      (err, token) => {
+        if (err) throw err;
+        res.status(200).json({ token, role: user.role });
+      }
+    );
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+};
