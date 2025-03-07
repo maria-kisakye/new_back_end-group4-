@@ -102,3 +102,42 @@ exports.login = async (req, res) => {
     res.status(500).send('Server error');
   }
 };
+// Middleware to verify token
+exports.verifyToken = (req, res, next) => {
+  const token = req.header('x-auth-token');
+  if (!token) {
+    return res.status(401).json({ message: 'No token, authorization denied' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded.user;
+    next();
+  } catch (err) {
+    res.status(401).json({ message: 'Token is not valid' });
+  }
+};
+
+// Middleware to authorize admin users
+exports.isAdmin = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Access denied' });
+  }
+  next();
+};
+
+// Middleware to authorize chapter presidents
+exports.isChapterPresident = (req, res, next) => {
+  if (req.user.role !== 'chapter_president') {
+    return res.status(403).json({ message: 'Access denied' });
+  }
+  next();
+};
+
+// Middleware to authorize students
+exports.isStudent = (req, res, next) => {
+  if (req.user.role !== 'student') {
+    return res.status(403).json({ message: 'Access denied' });
+  }
+  next();
+};
