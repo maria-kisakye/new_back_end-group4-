@@ -20,7 +20,7 @@ db.query(sql, (err, result) => {
         console.error('Error creating table:', err);
         return;
     }
-    console.log('Table created successfully');
+    console.log('President Table created successfully');
 });
 
 
@@ -70,7 +70,7 @@ db.query(sql1, (err, result) => {
         console.error('Error creating table:', err);
         return;
     }
-    console.log('Table created successfully');
+    console.log('Student Table created successfully');
 });
 
 
@@ -96,5 +96,47 @@ app.delete('/deleteStudent',(req,res)=>{
     db.query(sql1,name,(error,result)=>{
         if(error) throw error;
         res.send('Student deleted from database');
+    })
+});
+
+const sql2 = 
+`CREATE TABLE IF NOT EXISTS admin (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) ,
+    email VARCHAR(50),
+    password VARCHAR(50)
+)`;
+
+db.query(sql2, (err, result) => {
+    if (err) {
+        console.error('Error creating table:', err);
+        return;
+    }
+    console.log('Admin Table created successfully');
+});
+
+
+app.post('/addAdmin',(req,res)=>{
+    const {id, name, email,password} = req.body;
+    const sql2 = 'INSERT INTO Admin VALUES (?,?,?,?)';
+    db.query(sql2,[id,name,email,password],(error,result)=>{
+        if(error) throw error;
+        res.send('Admin added to database');
+})});
+
+app.get('/getAdmin',(req,res)=>{
+    const sql2 = 'SELECT * FROM Admin';
+    db.query(sql2,(error,result)=>{
+        if(error) throw error;
+        res.send(result);
+    })
+});
+
+app.delete('/deleteAdmin',(req,res)=>{
+    const {name} = req.body;
+    const sql2 = 'DELETE FROM Admin WHERE name = ?';
+    db.query(sql2,name,(error,result)=>{
+        if(error) throw error;
+        res.send('Admin deleted from database');
     })
 });
