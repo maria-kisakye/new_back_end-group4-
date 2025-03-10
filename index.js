@@ -34,7 +34,7 @@ app.listen(PORT, () => {
 
 app.post('/addPresident',(req,res)=>{
     const {id, name, email,password} = req.body;
-    const sql = 'INSERT INTO President VALUES (?,?,?)';
+    const sql = 'INSERT INTO President VALUES (?,?,?,?)';
     db.query(sql,[id, name,email,password],(error,result)=>{
         if(error) throw error;
         res.send('President added to database');
@@ -76,7 +76,7 @@ db.query(sql1, (err, result) => {
 
 app.post('/addStudent',(req,res)=>{
     const {id, name, email,password} = req.body;
-    const sql1 = 'INSERT INTO Student VALUES (?,?,?)';
+    const sql1 = 'INSERT INTO Student VALUES (?,?,?,?)';
     db.query(sql1,[id,name,email,password],(error,result)=>{
         if(error) throw error;
         res.send('Student added to database');
