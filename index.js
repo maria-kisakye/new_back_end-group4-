@@ -4,7 +4,7 @@ const auth = require('./authenticate');
 const app = express();
 const router = express.Router();
 const cors = require('cors');
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5006;
 
 app.use(cors());
 
@@ -19,8 +19,7 @@ app.listen(PORT, () => {
 
 app.use(express.json());
 
-// const PORT = process.env.PORT || 3006;
-const sql = 
+const sql =
 `CREATE TABLE IF NOT EXISTS president (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100),
