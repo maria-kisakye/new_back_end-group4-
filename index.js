@@ -47,3 +47,12 @@ app.get('/getUsers',(req,res)=>{
         res.send(result);
     })
 });
+
+app.delete('/deleteUser',(req,res)=>{
+    const {name} = req.body;
+    const sql = 'DELETE FROM Users WHERE name = ?';
+    db.query(sql,name,(error,result)=>{
+        if(error) throw error;
+        res.send('User deleted from database');
+    })
+});

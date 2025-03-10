@@ -1,11 +1,12 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const db = require('../db');
+const db = require('./config');
 require('dotenv').config();
 
 const auth = require('./authenticate');
 const router = express.Router();
+const { register, login } = require('./authenticate');
 
 // User registration with role selection (student, president, admin)
 router.post('/register', (req, res) => {
@@ -143,10 +144,17 @@ exports.isStudent = (req, res, next) => {
   next();
 };
 
+module.exports = router;
+module.exports = auth;
+module.exports = {
+  register
+};
+module.exports = {
+  login
+};
+
 // Register user
-router.post('/register', register);
+// router.post('/register', register);
 
 // Login user
-router.post('/login', login);
-
-module.exports = router;
+// router.post('/login', login);
