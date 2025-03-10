@@ -3,10 +3,23 @@ const db = require('./config');
 const auth = require('./authenticate');
 const app = express();
 const router = express.Router();
+const cors = require('cors');
+const PORT = process.env.PORT;
+
+app.use(cors());
+
+app.get('/', (req,res) => {
+    res.send('Hello from backend')
+});
+
+app.listen(PORT, () => {
+    console.log(`Backend server running on http://localhost:${PORT}`);
+  });
+
 
 app.use(express.json());
 
-const PORT = process.env.PORT || 3006;
+// const PORT = process.env.PORT || 3006;
 const sql = 
 `CREATE TABLE IF NOT EXISTS president (
     id INT AUTO_INCREMENT PRIMARY KEY,
