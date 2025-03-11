@@ -5,6 +5,8 @@ const app = express();
 const router = express.Router();
 const cors = require('cors');
 const PORT = process.env.PORT || 3001;
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 app.use(cors());
 
@@ -13,8 +15,7 @@ app.use(express.json());
 const sql =
 `CREATE TABLE IF NOT EXISTS president (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100),
-    email VARCHAR(50),
+    username VARCHAR(100),
     password VARCHAR(50)
 )`;
 
@@ -36,9 +37,14 @@ app.get('/', (req, res) => {
 // });
 
 app.post('/addPresident',(req,res)=>{
-    const {id, name, email,password} = req.body;
-    const sql = 'INSERT INTO President VALUES (?,?,?,?)';
-    db.query(sql,[id, name,email,password],(error,result)=>{
+    const {id, username, password} = req.body;
+    if (!id || !username || !password ) {
+        return res.status(400).json({ message: "All fields are required" });
+    }
+    //encrpt the password
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    const sql = 'INSERT INTO President VALUES (?,?,?)';
+    db.query(sql,[id, username, hashedPassword],(error,result)=>{
         if(error) throw error;
         res.send('President added to database');
 })});
@@ -52,9 +58,9 @@ app.get('/getPresident',(req,res)=>{
 });
 
 app.delete('/deletePresident',(req,res)=>{
-    const {name} = req.body;
-    const sql = 'DELETE FROM President WHERE name = ?';
-    db.query(sql,name,(error,result)=>{
+    const {username} = req.body;
+    const sql = 'DELETE FROM President WHERE username = ?';
+    db.query(sql,username,(error,result)=>{
         if(error) throw error;
         res.send('President deleted from database');
     })
@@ -63,8 +69,7 @@ app.delete('/deletePresident',(req,res)=>{
 const sql1 = 
 `CREATE TABLE IF NOT EXISTS student (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) ,
-    email VARCHAR(50),
+    username VARCHAR(100) ,
     password VARCHAR(50)
 )`;
 
@@ -76,14 +81,60 @@ db.query(sql1, (err, result) => {
     console.log('Student Table created successfully');
 });
 
-
 app.post('/addStudent',(req,res)=>{
-    const {id, name, email,password} = req.body;
-    const sql1 = 'INSERT INTO Student VALUES (?,?,?,?)';
-    db.query(sql1,[id,name,email,password],(error,result)=>{
+    const {id, username,password} = req.body;
+    if (!id || !username || !password ) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+    //encrpt the password
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    const sql1 = "INSERT INTO Student (id,username, password) VALUES (?, ?, ?)";
+    
+    db.query(sql1,[id,username,hashedPassword],(error,result)=>{
         if(error) throw error;
         res.send('Student added to database');
 })});
+
+//login
+// - brcypt / compare
+exports.login = async (req, res) => {
+    const { username, password } = req.body;
+  
+    try {
+      const user = await db.User.findOne({ where: { username } });
+  
+      if (!user) {
+        return res.status(400).json({ message: 'Invalid credentials' });
+      }
+  
+      const isMatch = await bcrypt.compare(password, hashedPassword);
+  
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Invalid credentials' });
+        }
+    
+        const payload = {
+            user: {
+                id: user.id
+            }
+        };
+    
+        jwt.sign(
+            payload,
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' },
+            (err, token) => {
+                if (err) throw err;
+                res.status(200).json({ token });
+            }
+        );
+      } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+      }
+    };
+
+
 
 app.get('/getStudent',(req,res)=>{
     const sql1 = 'SELECT * FROM Student';
@@ -94,9 +145,9 @@ app.get('/getStudent',(req,res)=>{
 });
 
 app.delete('/deleteStudent',(req,res)=>{
-    const {name} = req.body;
-    const sql1 = 'DELETE FROM Student WHERE name = ?';
-    db.query(sql1,name,(error,result)=>{
+    const {username} = req.body;
+    const sql1 = 'DELETE FROM Student WHERE username = ?';
+    db.query(sql1,username,(error,result)=>{
         if(error) throw error;
         res.send('Student deleted from database');
     })
@@ -105,8 +156,7 @@ app.delete('/deleteStudent',(req,res)=>{
 const sql2 = 
 `CREATE TABLE IF NOT EXISTS admin (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) ,
-    email VARCHAR(50),
+    username VARCHAR(100),
     password VARCHAR(50)
 )`;
 
@@ -120,9 +170,14 @@ db.query(sql2, (err, result) => {
 
 
 app.post('/addAdmin',(req,res)=>{
-    const {id, name, email,password} = req.body;
-    const sql2 = 'INSERT INTO Admin VALUES (?,?,?,?)';
-    db.query(sql2,[id,name,email,password],(error,result)=>{
+    const {id, username,password} = req.body;
+    if (!id || !username || !password ) {
+        return res.status(400).json({ message: "All fields are required" });
+    }
+    //encrpt the password
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    const sql2 = 'INSERT INTO Admin VALUES (?,?,?)';
+    db.query(sql2,[id,username,hashedPassword],(error,result)=>{
         if(error) throw error;
         res.send('Admin added to database');
 })});
@@ -136,9 +191,9 @@ app.get('/getAdmin',(req,res)=>{
 });
 
 app.delete('/deleteAdmin',(req,res)=>{
-    const {name} = req.body;
-    const sql2 = 'DELETE FROM Admin WHERE name = ?';
-    db.query(sql2,name,(error,result)=>{
+    const {username} = req.body;
+    const sql2 = 'DELETE FROM Admin WHERE username = ?';
+    db.query(sql2,username,(error,result)=>{
         if(error) throw error;
         res.send('Admin deleted from database');
     })

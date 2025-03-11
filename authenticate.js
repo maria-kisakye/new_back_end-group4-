@@ -26,45 +26,45 @@ router.post('/register', (req, res) => {
     });
 });
 
-// Register user
-exports.register = async (req, res) => {
-  const {id, name, email, password} = req.body;
+// // Register user
+// exports.register = async (req, res) => {
+//   const {id, name, email, password} = req.body;
 
-  try {
-    let user = await db.User.findOne({ where: { email } });
+//   try {
+//     let user = await db.User.findOne({ where: { email } });
 
-    if (user) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
+//     if (user) {
+//       return res.status(400).json({ message: 'User already exists' });
+//     }
 
-    user = await db.User.create({
-      id,
-      name,
-      email,
-      password
-    });
+//     user = await db.User.create({
+//       id,
+//       name,
+//       email,
+//       password
+//     });
 
-    const payload = {
-      user: {
-        id: user.id
-        // role: user.role
-      }
-    };
+//     const payload = {
+//       user: {
+//         id: user.id
+//         // role: user.role
+//       }
+//     };
 
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' },
-      (err, token) => {
-        if (err) throw err;
-        res.status(200).json({ token });
-      }
-    );
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
-  }
-};
+//     jwt.sign(
+//       payload,
+//       process.env.JWT_SECRET,
+//       { expiresIn: '1h' },
+//       (err, token) => {
+//         if (err) throw err;
+//         res.status(200).json({ token });
+//       }
+//     );
+//   } catch (err) {
+//     console.error(err.message);
+//     res.status(500).send('Server error');
+//   }
+// };
 
 // Login user
 exports.login = async (req, res) => {
