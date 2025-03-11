@@ -4,18 +4,9 @@ const auth = require('./authenticate');
 const app = express();
 const router = express.Router();
 const cors = require('cors');
-const PORT = process.env.PORT || 5006;
+const PORT = process.env.PORT || 3001;
 
 app.use(cors());
-
-app.get('/', (req,res) => {
-    res.send('Hello from backend')
-});
-
-app.listen(PORT, () => {
-    console.log(`Backend server running on http://localhost:${PORT}`);
-  });
-
 
 app.use(express.json());
 
@@ -40,9 +31,9 @@ app.get('/', (req, res) => {
     res.send('Welcome to API!');
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+// app.listen(PORT, () => {
+//     console.log(`Server is running on port ${PORT}`);
+// });
 
 app.post('/addPresident',(req,res)=>{
     const {id, name, email,password} = req.body;
@@ -152,3 +143,11 @@ app.delete('/deleteAdmin',(req,res)=>{
         res.send('Admin deleted from database');
     })
 });
+
+app.get('/', (req,res) => {
+    res.send('Hello from backend')
+});
+
+app.listen(PORT, () => {
+    console.log(`Backend server running on http://localhost:${PORT}`);
+  });
