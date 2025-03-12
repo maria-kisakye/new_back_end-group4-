@@ -7,8 +7,15 @@ const cors = require('cors');
 const PORT = process.env.PORT || 3001;
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const bodyParser = require('body-parser');
 
-app.use(cors());
+app.use(bodyParser.json());
+
+// app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3000', // Replace with your frontend's domain
+    credentials: true, // If you need cookies/auth headers
+  }));
 
 app.use(express.json());
 
