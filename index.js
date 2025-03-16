@@ -4,212 +4,212 @@ const auth = require('./authenticate');
 const app = express();
 const router = express.Router();
 const cors = require('cors');
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 5000; // Changed to 5000 to match frontend
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const bodyParser = require('body-parser');
 
+// Middleware
 app.use(bodyParser.json());
-
-// app.use(cors());
 app.use(cors({
-    origin: 'http://localhost:3000', // Replace with your frontend's domain
-    credentials: true, // If you need cookies/auth headers
-  }));
-
+    origin: 'http://localhost:3000', // Frontend URL
+    credentials: true,
+}));
 app.use(express.json());
 
-const sql =
-`CREATE TABLE IF NOT EXISTS president (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(100),
-    password VARCHAR(50)
-)`;
-
-db.query(sql, (err, result) => {
-    if (err) {
-        console.error('Error creating table:', err);
-        return;
-    }
-    console.log('President Table created successfully');
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ message: 'Internal server error' });
 });
 
+// Database table creation
+const createTables = async () => {
+    const tables = [
+        {
+            name: 'president',
+            sql: `CREATE TABLE IF NOT EXISTS president (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(100) UNIQUE,
+                password VARCHAR(255),
+                createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`
+        },
+        {
+            name: 'student',
+            sql: `CREATE TABLE IF NOT EXISTS student (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(100) UNIQUE,
+                password VARCHAR(255),
+                createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`
+        },
+        {
+            name: 'admin',
+            sql: `CREATE TABLE IF NOT EXISTS admin (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(100) UNIQUE,
+                password VARCHAR(255),
+                createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`
+        }
+    ];
 
+    for (const table of tables) {
+        try {
+            await new Promise((resolve, reject) => {
+                db.query(table.sql, (err, result) => {
+                    if (err) reject(err);
+                    resolve(result);
+                });
+            });
+            console.log(`${table.name} table created successfully`);
+        } catch (err) {
+            console.error(`Error creating ${table.name} table:`, err);
+        }
+    }
+};
+
+// Initialize tables
+createTables();
+
+// Root endpoint (for frontend basic data)
 app.get('/', (req, res) => {
-    res.send('Welcome to API!');
+    res.json({ message: 'Welcome to the API server' });
 });
 
-// app.listen(PORT, () => {
-//     console.log(`Server is running on port ${PORT}`);
-// });
+// Generic CRUD operations for each entity
+const createEntityRoutes = (entityName) => {
+    // Add entity
+    app.post(`/api/add${entityName}`, async (req, res) => {
+        try {
+            const { id, username, password } = req.body;
+            
+            if (!username || !password) {
+                return res.status(400).json({ message: "Username and password are required" });
+            }
 
-app.post('/addPresident',(req,res)=>{
-    const {id, username, password} = req.body;
-    if (!id || !username || !password ) {
-        return res.status(400).json({ message: "All fields are required" });
-    }
-    //encrpt the password
-    const hashedPassword = bcrypt.hashSync(password, 10);
-    const sql = 'INSERT INTO President VALUES (?,?,?)';
-    db.query(sql,[id, username, hashedPassword],(error,result)=>{
-        if(error) throw error;
-        res.send('President added to database');
-})});
-
-app.get('/getPresident',(req,res)=>{
-    const sql = 'SELECT * FROM President';
-    db.query(sql,(error,result)=>{
-        if(error) throw error;
-        res.send(result);
-    })
-});
-
-app.delete('/deletePresident',(req,res)=>{
-    const {username} = req.body;
-    const sql = 'DELETE FROM President WHERE username = ?';
-    db.query(sql,username,(error,result)=>{
-        if(error) throw error;
-        res.send('President deleted from database');
-    })
-});
-
-const sql1 = 
-`CREATE TABLE IF NOT EXISTS student (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(100) ,
-    password VARCHAR(50)
-)`;
-
-db.query(sql1, (err, result) => {
-    if (err) {
-        console.error('Error creating table:', err);
-        return;
-    }
-    console.log('Student Table created successfully');
-});
-
-app.post('/addStudent',(req,res)=>{
-    const {id, username,password} = req.body;
-    if (!id || !username || !password ) {
-            return res.status(400).json({ message: "All fields are required" });
+            const hashedPassword = await bcrypt.hash(password, 10);
+            const sql = `INSERT INTO ${entityName} (username, password) VALUES (?, ?)`;
+            
+            db.query(sql, [username, hashedPassword], (error, result) => {
+                if (error) {
+                    if (error.code === 'ER_DUP_ENTRY') {
+                        return res.status(400).json({ message: `${entityName} already exists` });
+                    }
+                    throw error;
+                }
+                res.status(201).json({ 
+                    message: `${entityName} added successfully`,
+                    id: result.insertId
+                });
+            });
+        } catch (error) {
+            console.error(`Error adding ${entityName}:`, error);
+            res.status(500).json({ message: `Failed to add ${entityName}` });
         }
-    //encrpt the password
-    const hashedPassword = bcrypt.hashSync(password, 10);
-    const sql1 = "INSERT INTO Student (id,username, password) VALUES (?, ?, ?)";
-    
-    db.query(sql1,[id,username,hashedPassword],(error,result)=>{
-        if(error) throw error;
-        res.send('Student added to database');
-})});
+    });
 
-//login
-// - brcypt / compare
-exports.login = async (req, res) => {
-    const { username, password } = req.body;
-  
+    // Get all entities
+    app.get(`/api/get${entityName}`, (req, res) => {
+        try {
+            const sql = `SELECT id, username, createdAt FROM ${entityName}`;
+            db.query(sql, (error, result) => {
+                if (error) throw error;
+                res.json(result);
+            });
+        } catch (error) {
+            console.error(`Error fetching ${entityName}s:`, error);
+            res.status(500).json({ message: `Failed to fetch ${entityName}s` });
+        }
+    });
+
+    // Delete entity
+    app.delete(`/api/delete${entityName}`, (req, res) => {
+        try {
+            const { username } = req.body;
+            if (!username) {
+                return res.status(400).json({ message: "Username is required" });
+            }
+
+            const sql = `DELETE FROM ${entityName} WHERE username = ?`;
+            db.query(sql, [username], (error, result) => {
+                if (error) throw error;
+                if (result.affectedRows === 0) {
+                    return res.status(404).json({ message: `${entityName} not found` });
+                }
+                res.json({ message: `${entityName} deleted successfully` });
+            });
+        } catch (error) {
+            console.error(`Error deleting ${entityName}:`, error);
+            res.status(500).json({ message: `Failed to delete ${entityName}` });
+        }
+    });
+};
+
+// Create routes for all entities
+['President', 'Student', 'Admin'].forEach(createEntityRoutes);
+
+// Login endpoint
+app.post('/api/login', async (req, res) => {
     try {
-      const user = await db.User.findOne({ where: { username } });
-  
-      if (!user) {
-        return res.status(400).json({ message: 'Invalid credentials' });
-      }
-  
-      const isMatch = await bcrypt.compare(password, hashedPassword);
-  
-      if (!isMatch) {
-        return res.status(400).json({ message: 'Invalid credentials' });
+        const { username, password, role } = req.body;
+        if (!username || !password || !role) {
+            return res.status(400).json({ message: 'All fields are required' });
         }
-    
-        const payload = {
-            user: {
-                id: user.id
+
+        const table = role.toLowerCase();
+        if (!['president', 'student', 'admin'].includes(table)) {
+            return res.status(400).json({ message: 'Invalid role' });
+        }
+
+        const sql = `SELECT * FROM ${table} WHERE username = ?`;
+        db.query(sql, [username], async (error, results) => {
+            if (error) throw error;
+            
+            if (results.length === 0) {
+                return res.status(401).json({ message: 'Invalid credentials' });
             }
-        };
-    
-        jwt.sign(
-            payload,
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' },
-            (err, token) => {
-                if (err) throw err;
-                res.status(200).json({ token });
+
+            const user = results[0];
+            const isMatch = await bcrypt.compare(password, user.password);
+
+            if (!isMatch) {
+                return res.status(401).json({ message: 'Invalid credentials' });
             }
-        );
-      } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
-      }
-    };
 
+            const payload = {
+                user: {
+                    id: user.id,
+                    username: user.username,
+                    role: role
+                }
+            };
 
-
-app.get('/getStudent',(req,res)=>{
-    const sql1 = 'SELECT * FROM Student';
-    db.query(sql1,(error,result)=>{
-        if(error) throw error;
-        res.send(result);
-    })
-});
-
-app.delete('/deleteStudent',(req,res)=>{
-    const {username} = req.body;
-    const sql1 = 'DELETE FROM Student WHERE username = ?';
-    db.query(sql1,username,(error,result)=>{
-        if(error) throw error;
-        res.send('Student deleted from database');
-    })
-});
-
-const sql2 = 
-`CREATE TABLE IF NOT EXISTS admin (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(100),
-    password VARCHAR(50)
-)`;
-
-db.query(sql2, (err, result) => {
-    if (err) {
-        console.error('Error creating table:', err);
-        return;
+            jwt.sign(
+                payload,
+                process.env.JWT_SECRET || 'your-secret-key',
+                { expiresIn: '1h' },
+                (err, token) => {
+                    if (err) throw err;
+                    res.json({
+                        token,
+                        user: {
+                            id: user.id,
+                            username: user.username,
+                            role: role
+                        }
+                    });
+                }
+            );
+        });
+    } catch (err) {
+        console.error('Login error:', err);
+        res.status(500).json({ message: 'Server error' });
     }
-    console.log('Admin Table created successfully');
 });
 
-
-app.post('/addAdmin',(req,res)=>{
-    const {id, username,password} = req.body;
-    if (!id || !username || !password ) {
-        return res.status(400).json({ message: "All fields are required" });
-    }
-    //encrpt the password
-    const hashedPassword = bcrypt.hashSync(password, 10);
-    const sql2 = 'INSERT INTO Admin VALUES (?,?,?)';
-    db.query(sql2,[id,username,hashedPassword],(error,result)=>{
-        if(error) throw error;
-        res.send('Admin added to database');
-})});
-
-app.get('/getAdmin',(req,res)=>{
-    const sql2 = 'SELECT * FROM Admin';
-    db.query(sql2,(error,result)=>{
-        if(error) throw error;
-        res.send(result);
-    })
-});
-
-app.delete('/deleteAdmin',(req,res)=>{
-    const {username} = req.body;
-    const sql2 = 'DELETE FROM Admin WHERE username = ?';
-    db.query(sql2,username,(error,result)=>{
-        if(error) throw error;
-        res.send('Admin deleted from database');
-    })
-});
-
-app.get('/', (req,res) => {
-    res.send('Hello from backend')
-});
-
+// Start server
 app.listen(PORT, () => {
     console.log(`Backend server running on http://localhost:${PORT}`);
-  });
+});
