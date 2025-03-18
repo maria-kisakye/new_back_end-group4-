@@ -220,10 +220,13 @@ createUserRoutes();
 app.post('/api/login', async (req, res) => {
     try {
         const { username, password } = req.body;
+        
+        // Validate input
         if (!username || !password) {
             return res.status(400).json({ message: 'Username and password are required' });
         }
 
+        // Query to get user details with role
         const sql = `SELECT u.id, u.username, u.password, r.role_name 
                     FROM users u 
                     JOIN user_roles ur ON u.id = ur.user_id 
@@ -233,17 +236,20 @@ app.post('/api/login', async (req, res) => {
         db.query(sql, [username], async (error, results) => {
             if (error) throw error;
             
+            // Check if user exists
             if (results.length === 0) {
                 return res.status(401).json({ message: 'Invalid credentials' });
             }
 
             const user = results[0];
+            
+            // Verify password
             const isMatch = await bcrypt.compare(password, user.password);
-
             if (!isMatch) {
                 return res.status(401).json({ message: 'Invalid credentials' });
             }
 
+            // Create payload for JWT
             const payload = {
                 user: {
                     id: user.id,
@@ -252,14 +258,18 @@ app.post('/api/login', async (req, res) => {
                 }
             };
 
+            // Generate token - this is what will be returned to the user
             jwt.sign(
                 payload,
                 process.env.JWT_SECRET || 'your-secret-key',
-                { expiresIn: '1h' },
+                { expiresIn: '1h' }, // Token expires in 1 hour
                 (err, token) => {
                     if (err) throw err;
-                    res.json({
-                        token,
+                    
+                    // Return token and user info in response
+                    res.status(200).json({
+                        success: true,
+                        token: token,  // The JWT token for authentication
                         user: {
                             id: user.id,
                             username: user.username,
@@ -271,7 +281,10 @@ app.post('/api/login', async (req, res) => {
         });
     } catch (err) {
         console.error('Login error:', err);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ 
+            success: false,
+            message: 'Server error' 
+        });
     }
 });
 
