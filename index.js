@@ -54,7 +54,7 @@ const createTables = async () => {
             )`
         },
         {
-            name: 'president_manage_events',
+            name: 'events',
             sql: `CREATE TABLE IF NOT EXISTS president_manage_events (
             event_title VARCHAR(100) PRIMARY KEY,
             chapter VARCHAR(100),
