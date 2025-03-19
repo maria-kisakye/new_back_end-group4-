@@ -16,6 +16,7 @@ app.use(cors({
     credentials: true,
 }));
 app.use(express.json());
+app.use(userR);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -122,7 +123,7 @@ app.get('/', (req, res) => {
 // Generic CRUD operations for users (now using the users table with roles)
 const createUserRoutes = () => {
     // Add user with role
-    app.post('/api/addUser', async (req, res) => {
+    router.post('/addUser', async (req, res) => {
         try {
             const { username, email, password, role } = req.body;
             
@@ -166,7 +167,7 @@ const createUserRoutes = () => {
     });
 
     // Get all users with their roles
-    app.get('/api/getUsers', (req, res) => {
+    router.get('/getUsers', (req, res) => {
         try {
             const sql = `SELECT u.id, u.username, u.email, u.createdAt, r.role_name 
                         FROM users u 
@@ -183,7 +184,7 @@ const createUserRoutes = () => {
     });
 
     // Delete user
-    app.delete('/api/deleteUser', (req, res) => {
+    router.delete('/deleteUser', (req, res) => {
         try {
             const { username } = req.body;
             if (!username) {
@@ -217,7 +218,7 @@ const createUserRoutes = () => {
 createUserRoutes();
 
 // Login endpoint
-app.post('/api/login', async (req, res) => {
+router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
         
@@ -305,7 +306,7 @@ const authenticateToken = (req, res, next) => {
 // Chapter management routes with authentication
 const createChapterRoutes = () => {
     // Add a new chapter (only admin can add)
-    app.post('/api/addChapter', authenticateToken, async (req, res) => {
+    router.post('/addChapter', authenticateToken, async (req, res) => {
         try {
             if (req.user.user.role !== 'admin') {
                 return res.status(403).json({ message: 'Only admins can add chapters' });
@@ -341,7 +342,7 @@ const createChapterRoutes = () => {
     });
 
     // Delete a chapter (only admin can delete)
-    app.delete('/api/deleteChapter', authenticateToken, (req, res) => {
+    router.delete('/deleteChapter', authenticateToken, (req, res) => {
         try {
             if (req.user.user.role !== 'admin') {
                 return res.status(403).json({ message: 'Only admins can delete chapters' });
@@ -371,7 +372,7 @@ const createChapterRoutes = () => {
     });
 
     // Get all chapters (accessible to all authenticated users)
-    app.get('/api/getChapters', authenticateToken, (req, res) => {
+    router.get('/getChapters', authenticateToken, (req, res) => {
         try {
             const sql = `SELECT * FROM admin_chapter_table`;
             db.query(sql, (error, result) => {
@@ -386,8 +387,12 @@ const createChapterRoutes = () => {
 };
 
 // Initialize routes
+// Initialize routes
 createUserRoutes();
 createChapterRoutes();
+
+// Ensure routes are properly set up before starting the server
+app.use('/api', router);
 
 // Start server
 app.listen(PORT, () => {
