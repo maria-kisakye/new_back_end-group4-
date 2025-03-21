@@ -116,7 +116,7 @@ for (const roleSql of defaultRoles) {
 createTables();
 
 // Root endpoint (for frontend basic data)
-app.get('/', (req, res) => {
+app.get('/getData', (req, res) => {
     res.json({ message: 'Welcome to the API server' });
 });
 
