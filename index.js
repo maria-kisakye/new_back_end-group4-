@@ -13,10 +13,11 @@ const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 app.use(cors({
     origin: 'http://localhost:3000', // Frontend URL
-    credentials: true,
+    credentials: true,  
 }));
 app.use(express.json());
-app.use(userR);
+app.use(userRoutes);
+app.use(chapterRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
