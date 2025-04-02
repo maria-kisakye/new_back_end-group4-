@@ -263,7 +263,7 @@ router.post('/login', async (req, res) => {
             // Generate token - this is what will be returned to the user
             jwt.sign(
                 payload,
-                process.env.JWT_SECRET || 'your-secret-key',
+                process.env.JWT_SECRET || 'your_secret_changekey',
                 { expiresIn: '1h' }, // Token expires in 1 hour
                 (err, token) => {
                     if (err) throw err;
