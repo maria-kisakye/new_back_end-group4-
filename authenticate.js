@@ -130,7 +130,7 @@ exports.isAdmin = (req, res, next) => {
 
 // Middleware to authorize chapter presidents
 exports.isChapterPresident = (req, res, next) => {
-  if (req.user.role !== 'chapter_president') {
+  if (req.user.role !== 'Chapter_president') {
     return res.status(403).json({ message: 'Access denied' });
   }
   next();
