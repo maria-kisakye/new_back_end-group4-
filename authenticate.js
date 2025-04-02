@@ -122,7 +122,7 @@ exports.verifyToken = (req, res, next) => {
 
 // Middleware to authorize admin users
 exports.isAdmin = (req, res, next) => {
-  if (req.user.role !== 'admin') {
+  if (req.user.role !== 'Admin') {
     return res.status(403).json({ message: 'Access denied' });
   }
   next();
