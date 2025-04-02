@@ -138,7 +138,7 @@ exports.isChapterPresident = (req, res, next) => {
 
 // Middleware to authorize students
 exports.isStudent = (req, res, next) => {
-  if (req.user.role !== 'student') {
+  if (req.user.role !== 'Student') {
     return res.status(403).json({ message: 'Access denied' });
   }
   next();
